@@ -1,0 +1,70 @@
+dotnet ef migrations add InitialIdentity --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --context AppIdentityDbContext --output-dir Infrastructure/Migrations
+dotnet ef migrations add InitialApp --context AppDbContext --output-dir Infrastructure/Migrations
+
+
+## observa��o: no entity, quando eu tenho a liga��o 1:1 no banco de dados eu preciso referencias as entidades em ambas as classes da Entity.
+
+-- executar esse para iniciar as migrations
+--dotnet ef migrations add InitialCreate --project ./Projeto.Modulo.Infrastructure/Projeto.Modulo.Infrastructure.csproj --startup-project ./Projeto.Modulo.Api/Projeto.Modulo.Api.csproj --context ApplicationDbContext --output-dir Migrations --verbose
+
+# para migrations do identity 
+dotnet ef migrations add InitialIdentity --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppIdentityDbContext --output-dir ./Migrations/001_Identity
+
+# para migrations das tables de neg�cio.
+dotnet ef migrations add InitialApp --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business
+dotnet ef migrations add AddProduto --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add AjusteTables --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add TornarPapelNullable --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add AjustePedido --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add AjusteVenda --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add AjusteTables --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add AjustePedidoTransacao --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+
+dotnet ef migrations add AjusteTablesVendedor --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+dotnet ef migrations add AjusteTablesCliente --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business --verbose
+
+
+
+dotnet ef migrations add AtualizarTables --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj  --context AppDbContext --output-dir ./Migrations/002_business
+
+
+dotnet ef database remove --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+dotnet ef database update --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+
+
+-- adicionar uma nova migration
+dotnet ef migrations add [nome-da-migration] --project ./Projeto.Modulo.Infrastructure/Projeto.Modulo.Infrastructure.csproj --startup-project ./Projeto.Modulo.Api/Projeto.Modulo.Api.csproj --context ApplicationDbContext --output-dir Migrations
+
+-- atualizar a estrutura do banco de dados
+# dotnet ef database update --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --context AppDbContext
+
+dotnet ef database update --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppIdentityDbContext
+dotnet ef database update --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+dotnet ef database remove --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+
+dotnet ef migrations remove --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+dotnet ef database update NomeDaMigrationAnterior  --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+
+
+
+
+dotnet ef migrations remove --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.API/Projeto.Moope.API.csproj --context AppDbContext
+
+dotnet ef migrations remove --project ./Projeto.Modulo.Infrastructure/Projeto.Modulo.Infrastructure.csproj --context ApplicationDbContext
+
+
+dotnet ef migrations add AtualizarTableEndereco --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.Api/Projeto.Moope.Api.csproj --context ApplicationDbContext --output-dir Migrations
+dotnet ef migrations add AtualizarTableFornecedoreEndereco --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.Api/Projeto.Moope.Api.csproj --context ApplicationDbContext --output-dir Migrations
+
+dotnet ef migrations add AtualizarTableFornecedoreProduto --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.Api/Projeto.Moope.Api.csproj --context ApplicationDbContext --output-dir Migrations
+dotnet ef migrations add CorrigirChaveEstrangeiraProdutoFornecedor --project ./Projeto.Moope.Infrastructure/Projeto.Moope.Infrastructure.csproj --startup-project ./Projeto.Moope.Api/Projeto.Moope.Api.csproj --context ApplicationDbContext --output-dir Migrations
+
+
+***************************************************************
+https://docs-celpayments.celcoin.com.br/
+https://app.sandbox.cel.cash/v2/login
+E-mail: webservice@galaxpay.com.br
+Senha: webservice@ 
+
+Plano basico = 3787
+plano premium = 3789

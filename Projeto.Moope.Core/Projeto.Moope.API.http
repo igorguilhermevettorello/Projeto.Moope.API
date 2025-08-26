@@ -1,0 +1,47 @@
+@Projeto.Moope.API_HostAddress = http://localhost:5120
+
+GET {{Projeto.Moope.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+### Health Check da API de Vendas
+GET {{baseUrl}}/api/venda/health
+
+### Processar uma nova venda
+POST {{baseUrl}}/api/venda/processar
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "nomeCliente": "João Silva",
+  "numeroCartao": "4111111111111111",
+  "cvv": "123",
+  "dataValidade": "12/25",
+  "email": "joao.silva@email.com",
+  "telefone": "(11) 99999-9999",
+  "valor": 150.00,
+  "vendedorId": "{{vendedorId}}",
+  "planoId": "{{planoId}}",
+  "quantidade": 1,
+  "descricao": "Compra de plano teste"
+}
+
+### Consultar uma venda específica
+GET {{baseUrl}}/api/venda/{{vendaId}}
+Authorization: Bearer {{authToken}}
+
+### Listar vendas por vendedor
+GET {{baseUrl}}/api/venda/vendedor/{{vendedorId}}
+Authorization: Bearer {{authToken}}
+
+### Listar vendas por cliente
+GET {{baseUrl}}/api/venda/cliente/joao.silva@email.com
+Authorization: Bearer {{authToken}}
+
+### Variáveis para teste
+@baseUrl = https://localhost:7001
+@authToken = seu_token_jwt_aqui
+@vendedorId = guid_do_vendedor_aqui
+@planoId = guid_do_plano_aqui
+@vendaId = guid_da_venda_aqui

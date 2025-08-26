@@ -1,0 +1,67 @@
+## Ignore arquivos de build
+bin/
+obj/
+out/
+
+## Ignore pacotes NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Arquivos de log
+*.log
+
+## Arquivos temporários
+*.tmp
+*.temp
+*.bak
+*.swp
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Configurações de IDEs (Visual Studio, VS Code, JetBrains Rider)
+.vscode/
+.idea/
+*.code-workspace
+
+# Visual Studio
+*.dbmdl
+*.psess
+*.vsp
+*.vspscc
+*.vssscc
+.vs/
+TestResults/
+*.cache
+*.ilk
+*.pdb
+*.obj
+*.exe
+*.dll
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+
+# Rider
+.idea/
+*.sln.iml
+
+## Diretórios de publicação
+publish/
+*.publish.xml
+
+## Arquivos gerados por ferramentas
+Generated_Code/
+Generated/
+ClientApp/node_modules/
+ClientApp/build/
+
+## Outras exclusões comuns
+*.vsix
+*.ps1~

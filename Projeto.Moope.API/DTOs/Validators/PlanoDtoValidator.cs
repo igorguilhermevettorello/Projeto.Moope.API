@@ -3,7 +3,7 @@ using Projeto.Moope.API.DTOs.Planos;
 
 namespace Projeto.Moope.API.DTOs.Validators
 {
-    public class PlanoDtoValidator : AbstractValidator<PlanoDto>
+    public class PlanoDtoValidator : AbstractValidator<CreatePlanoDto>
     {
         public PlanoDtoValidator()
         {

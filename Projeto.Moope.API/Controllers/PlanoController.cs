@@ -9,6 +9,7 @@ using Projeto.Moope.Core.Enums;
 using Projeto.Moope.Core.Interfaces.Identity;
 using Projeto.Moope.Core.Interfaces.Notifications;
 using Projeto.Moope.Core.Interfaces.Services;
+using Projeto.Moope.Core.Interfaces.UnitOfWork;
 using Projeto.Moope.Core.Models;
 
 namespace Projeto.Moope.API.Controllers
@@ -19,26 +20,29 @@ namespace Projeto.Moope.API.Controllers
     public class PlanoController : MainController
     {
         private readonly IPlanoService _planoService;
-        private readonly IValidator<PlanoDto> _validator;
+        private readonly IValidator<CreatePlanoDto> _validator;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
         public PlanoController(
             IPlanoService planoService, 
-            IValidator<PlanoDto> validator, 
+            IValidator<CreatePlanoDto> validator, 
             IMapper mapper,
+            IUnitOfWork unitOfWork,
             INotificador notificador,
             IUser user) : base(notificador, user)
         {
             _planoService = planoService;
             _validator = validator;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<IActionResult> BuscarTodosAsync()
         {
             var planos = await _planoService.BuscarTodosAsync();
-            return Ok(_mapper.Map<IEnumerable<PlanoDto>>(planos));
+            return Ok(_mapper.Map<IEnumerable<CreatePlanoDto>>(planos));
         }
 
         [HttpGet("{id}")]
@@ -46,35 +50,47 @@ namespace Projeto.Moope.API.Controllers
         {
             var plano = await _planoService.BuscarPorIdAsync(id);
             if (plano == null) return NotFound();
-            return Ok(_mapper.Map<PlanoDto>(plano));
+            return Ok(_mapper.Map<CreatePlanoDto>(plano));
         }
 
         [HttpPost]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
-        [ProducesResponseType(typeof(PlanoDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(CreatePlanoDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> SalvarAsync(PlanoDto planoDto)
+        public async Task<IActionResult> SalvarAsync(CreatePlanoDto planoDto)
         {
-            if (!ModelState.IsValid) return CustomResponse(ModelState);
-            var plano = _mapper.Map<Plano>(planoDto);
-            var result = await _planoService.SalvarAsync(plano);
-            if (!result.Status) return CustomResponse();
-            return CreatedAtAction(nameof(result.Dados.Id), new { id = result.Dados.Codigo }, _mapper.Map<PlanoDto>(result.Dados));
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                if (!ModelState.IsValid) return CustomResponse(ModelState);
+                var plano = _mapper.Map<Plano>(planoDto);
+                var result = await _planoService.SalvarAsync(plano);
+                if (!result.Status) return CustomResponse();
+                await _unitOfWork.CommitAsync();
+                return Created(string.Empty, new { id = result.Dados.Id });
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                throw; 
+            }
+
+            //return CreatedAtAction(nameof(result.Dados.Id), new { id = result.Dados.Codigo }, _mapper.Map<CreatePlanoDto>(result.Dados));
         }
         
         [HttpPut("{codigo}")]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
-        [ProducesResponseType(typeof(PlanoDto), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(UpdatePlanoDto), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AtualizarAsync(string codigo, [FromBody] PlanoDto planoDto)
+        public async Task<IActionResult> AtualizarAsync(string codigo, [FromBody] UpdatePlanoDto planoDto)
         {
             if (codigo != planoDto.Codigo) return BadRequest();
-            var validation = await _validator.ValidateAsync(planoDto);
-            if (!validation.IsValid) return BadRequest(validation.Errors);
+            //var validation = await _validator.ValidateAsync(planoDto);
+            //if (!validation.IsValid) return BadRequest(validation.Errors);
             var plano = _mapper.Map<Plano>(planoDto);
             var result = await _planoService.AtualizarAsync(plano);
             if (!result.Status) return CustomResponse();

@@ -75,7 +75,7 @@ namespace Projeto.Moope.API.Configurations
 
         private static void RegisterValidators(IServiceCollection service)
         {
-            service.AddScoped<IValidator<PlanoDto>, PlanoDtoValidator>();
+            service.AddScoped<IValidator<CreatePlanoDto>, PlanoDtoValidator>();
             service.AddScoped<IValidator<CreateClienteDto>, CreateClienteDtoValidator>();
             service.AddScoped<IValidator<UpdateClienteDto>, UpdateClienteDtoValidator>();
             // service.AddScoped<IValidator<CreateVendaDto>, CreateVendaDtoValidator>();

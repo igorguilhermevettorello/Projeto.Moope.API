@@ -41,7 +41,7 @@ namespace Projeto.Moope.Core.Services
             var entity = await _planoRepository.SalvarAsync(plano);
             return new Result<Plano>()
             {
-                Status = false,
+                Status = true,
                 Dados = entity
             };
         }

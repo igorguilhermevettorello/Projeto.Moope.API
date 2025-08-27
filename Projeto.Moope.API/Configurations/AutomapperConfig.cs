@@ -16,14 +16,17 @@ namespace Projeto.Moope.API.Configurations
     {
         public AutomapperConfig()
         {
-            CreateMap<Plano, PlanoDto>().ReverseMap();
+            CreateMap<Plano, CreatePlanoDto>().ReverseMap();
+            CreateMap<Plano, UpdatePlanoDto>().ReverseMap();
+
             
+
             // Mapeamentos do Cliente
             // CreateMap<Cliente, ClienteDto>()
             //     .ForMember(dest => dest.PapelNome, opt => opt.MapFrom(src => src.Papel.Nome.ToString()));
 
             // cliente
-            
+
             CreateMap<Cliente, ListClienteDto>().ReverseMap();
             
             CreateMap<CreateClienteDto, Cliente>();

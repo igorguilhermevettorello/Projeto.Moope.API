@@ -7,6 +7,12 @@
         public T? Dados { get; set; }
     }
     
+    public class Result
+    {
+        public bool Status { get; set; }
+        public string? Mensagem { get; set; }
+    }
+    
     public class ResultUser<T>
     {
         public bool Status { get; set; }

@@ -41,6 +41,21 @@ namespace Projeto.Moope.Core.Services
             return await _vendedorRepository.BuscarTodosAsync();
         }
 
+        public async Task<IEnumerable<Vendedor>> BuscarTodosComDadosRelacionadosAsync()
+        {
+            return await _vendedorRepository.BuscarTodosComDadosRelacionadosAsync();
+        }
+
+        public async Task<IEnumerable<T>> BuscarVendedoresComDadosAsync<T>()
+        {
+            return await _vendedorRepository.BuscarVendedoresComDadosAsync<T>();
+        }
+
+        public async Task<T?> BuscarVendedorPorIdComDadosAsync<T>(Guid id)
+        {
+            return await _vendedorRepository.BuscarVendedorPorIdComDadosAsync<T>(id);
+        }
+
         public async Task<Result<Vendedor>> SalvarAsync(Vendedor vendedor)
         {
             if (!ExecutarValidacao(new VendedorValidator(), vendedor))

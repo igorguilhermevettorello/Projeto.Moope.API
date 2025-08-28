@@ -7,5 +7,7 @@ namespace Projeto.Moope.Core.Interfaces.Repositories
     {
         Task<Cliente> BuscarPorIdAsNotrackingAsync(Guid id);
         Task<Cliente> BuscarPorEmailAsync(string email);
+        Task<IEnumerable<T>> BuscarClientesComDadosAsync<T>();
+        Task<T?> BuscarClientePorIdComDadosAsync<T>(Guid id);
     }
 }

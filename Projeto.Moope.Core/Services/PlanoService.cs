@@ -34,7 +34,8 @@ namespace Projeto.Moope.Core.Services
             {
                 return new Result<Plano>()
                 {
-                    Status = false
+                    Status = false,
+                    Mensagem = "Não foi possível salvar o plano. Por favor, tente novamente em alguns instantes."
                 };
             }
 

@@ -13,10 +13,13 @@ namespace Projeto.Moope.Core.Models
         [NotMapped]
         public string CpfCnpj { get; set; }
         public decimal PercentualComissao { get; set; }
+        public string ChavePix { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
         public Guid? VendedorId { get; set; }
         public Vendedor VendedorPai { get; set; }
         public ICollection<Vendedor> VendedoresFilhos { get; set; }
+        [NotMapped]
+        public Usuario Usuario { get; set; }
     }
 } 

@@ -39,10 +39,15 @@ namespace Projeto.Moope.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = nameof(TipoUsuario.Administrador))]
+        [ProducesResponseType(typeof(CreatePlanoDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> BuscarTodosAsync()
         {
             var planos = await _planoService.BuscarTodosAsync();
-            return Ok(_mapper.Map<IEnumerable<CreatePlanoDto>>(planos));
+            return Ok(_mapper.Map<IEnumerable<ListPlanoDto>>(planos));
         }
 
         [HttpGet("{id}")]
@@ -61,40 +66,59 @@ namespace Projeto.Moope.API.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> SalvarAsync(CreatePlanoDto planoDto)
         {
+            if (!ModelState.IsValid) return CustomResponse(ModelState);
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                if (!ModelState.IsValid) return CustomResponse(ModelState);
                 var plano = _mapper.Map<Plano>(planoDto);
                 var result = await _planoService.SalvarAsync(plano);
-                if (!result.Status) return CustomResponse();
+                if (!result.Status) throw new Exception(result.Mensagem);
                 await _unitOfWork.CommitAsync();
                 return Created(string.Empty, new { id = result.Dados.Id });
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackAsync();
-                throw; 
+                NotificarErro("Mensagem", ex.Message);
+                return CustomResponse(); 
             }
-
-            //return CreatedAtAction(nameof(result.Dados.Id), new { id = result.Dados.Codigo }, _mapper.Map<CreatePlanoDto>(result.Dados));
         }
         
-        [HttpPut("{codigo}")]
+        [HttpPut("{id}")]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
         [ProducesResponseType(typeof(UpdatePlanoDto), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AtualizarAsync(string codigo, [FromBody] UpdatePlanoDto planoDto)
+        public async Task<IActionResult> AtualizarAsync(Guid id, [FromBody] UpdatePlanoDto planoDto)
         {
-            if (codigo != planoDto.Codigo) return BadRequest();
-            //var validation = await _validator.ValidateAsync(planoDto);
-            //if (!validation.IsValid) return BadRequest(validation.Errors);
-            var plano = _mapper.Map<Plano>(planoDto);
-            var result = await _planoService.AtualizarAsync(plano);
-            if (!result.Status) return CustomResponse();
-            return NoContent();
+            if (id == Guid.Empty || planoDto.Id == Guid.Empty)
+            {
+                ModelState.AddModelError("Id", "Campo Id está inválido.");
+                return CustomResponse(ModelState);
+            }
+            
+            if (id != planoDto.Id)
+            {
+                ModelState.AddModelError("Id", "Campo Id está inválido.");
+                return CustomResponse(ModelState);
+            }
+            
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var plano = _mapper.Map<Plano>(planoDto);
+                var result = await _planoService.AtualizarAsync(plano);
+                if (!result.Status) throw new Exception(result.Mensagem);
+                await _unitOfWork.CommitAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                NotificarErro("Mensagem", ex.Message);
+                return CustomResponse(); 
+            }
         }
 
         [HttpPut("inativar/{codigo}")]
@@ -106,12 +130,30 @@ namespace Projeto.Moope.API.Controllers
         public async Task<IActionResult> InativarAsync(string codigo)
         {
             bool isValid = Guid.TryParse(codigo, out Guid id);
-            if (!isValid) return BadRequest();
+            if (!isValid)
+            {
+                ModelState.AddModelError("Id", "Campo Id está inválido.");
+                return CustomResponse(ModelState);
+            }
+            
             var plano = await _planoService.BuscarPorIdAsync(id);
-            if (plano == null) return NotFound();
-            var result = await _planoService.AtivarInativarAsync(plano, false);
-            if (!result.Status) return CustomResponse();
-            return NoContent();
+            if (plano == null) 
+                return NotFound();
+            
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var result = await _planoService.AtivarInativarAsync(plano, false);
+                if (!result.Status) throw new Exception(result.Mensagem);
+                await _unitOfWork.CommitAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                NotificarErro("Mensagem", ex.Message);
+                return CustomResponse(); 
+            }
         }
 
         [HttpPut("ativar/{codigo}")]
@@ -123,12 +165,30 @@ namespace Projeto.Moope.API.Controllers
         public async Task<IActionResult> AtivarAsync(string codigo)
         {
             bool isValid = Guid.TryParse(codigo, out Guid id);
-            if (!isValid) return BadRequest();
+            if (!isValid)
+            {
+                ModelState.AddModelError("Id", "Campo Id está inválido.");
+                return CustomResponse(ModelState);
+            }
+            
             var plano = await _planoService.BuscarPorIdAsync(id);
-            if (plano == null) return NotFound();
-            var result = await _planoService.AtivarInativarAsync(plano, true);
-            if (!result.Status) return CustomResponse();
-            return NoContent();
+            if (plano == null) 
+                return NotFound();
+            
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var result = await _planoService.AtivarInativarAsync(plano, true);
+                if (!result.Status) throw new Exception(result.Mensagem);
+                await _unitOfWork.CommitAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                NotificarErro("Mensagem", ex.Message);
+                return CustomResponse(); 
+            }
         }
 
         [HttpDelete("{codigo}")]

@@ -5,12 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Projeto.Moope.API.Controllers.Base;
 using Projeto.Moope.API.DTOs.Clientes;
 using Projeto.Moope.API.DTOs.Revendedor;
+using Projeto.Moope.API.DTOs.Vendedor;
 using Projeto.Moope.Core.Enums;
 using Projeto.Moope.Core.Interfaces.Identity;
 using Projeto.Moope.Core.Interfaces.Notifications;
 using Projeto.Moope.Core.Interfaces.Services;
 using Projeto.Moope.Core.Interfaces.UnitOfWork;
 using Projeto.Moope.Core.Models;
+using Projeto.Moope.Infrastructure.Helpers;
 
 namespace Projeto.Moope.API.Controllers
 {
@@ -49,12 +51,41 @@ namespace Projeto.Moope.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
+        [ProducesResponseType(typeof(IEnumerable<VendedorQueryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> BuscarTodosAsync()
         {
-            var clientes = await _vendedorService.BuscarTodosAsync();
-            return Ok(_mapper.Map<IEnumerable<ListClienteDto>>(clientes));
+            var vendedores = await _vendedorService.BuscarVendedoresComDadosAsync<VendedorQueryDto>();
+            return Ok(vendedores);
         }
-        
+
+        [HttpGet("{id}")]
+        [Authorize(Roles = nameof(TipoUsuario.Administrador))]
+        [ProducesResponseType(typeof(VendedorDetalheDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> BuscarVendedorPorIdAsync(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                ModelState.AddModelError("Id", "ID do vendedor é obrigatório");
+                return CustomResponse(ModelState);
+            }
+
+            var vendedor = await _vendedorService.BuscarVendedorPorIdComDadosAsync<VendedorDetalheDto>(id);
+            
+            if (vendedor == null)
+            {
+                return NotFound("Vendedor não encontrado");
+            }
+
+            return Ok(vendedor);
+        }
+
         [HttpPost]
         [Authorize(Roles = $"{nameof(TipoUsuario.Vendedor)},{nameof(TipoUsuario.Administrador)}")]
         [ProducesResponseType(typeof(CreateVendedorDto), StatusCodes.Status201Created)]
@@ -236,6 +267,22 @@ namespace Projeto.Moope.API.Controllers
                 await _unitOfWork.RollbackAsync();
                 return CustomResponse();
             }
+        }
+        
+        [HttpGet("tipo-pessoa")]
+        [ProducesResponseType(typeof(UpdateClienteDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public IActionResult BuscarTipoPessoasAsync()
+        {
+            // Retorna apenas PessoaJuridica
+            var lista = new List<object>
+            {
+                new { value = (int)TipoPessoa.JURIDICA, label = "Pessoa Jurídica" }
+            };
+            
+            return Ok(lista);
         }
     }
 }

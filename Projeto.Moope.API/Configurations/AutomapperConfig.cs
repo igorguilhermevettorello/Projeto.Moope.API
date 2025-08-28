@@ -5,9 +5,11 @@ using Projeto.Moope.API.DTOs.Enderecos;
 using Projeto.Moope.API.DTOs.Planos;
 using Projeto.Moope.API.DTOs.Revendedor;
 using Projeto.Moope.API.DTOs.Vendas;
+using Projeto.Moope.API.DTOs.Vendedor;
 using Projeto.Moope.Core.Commands.Clientes.Atualizar;
 using Projeto.Moope.Core.Commands.Clientes.Criar;
 using Projeto.Moope.Core.Commands.Vendas;
+using Projeto.Moope.Core.Enums;
 using Projeto.Moope.Core.Models;
 
 namespace Projeto.Moope.API.Configurations
@@ -18,8 +20,7 @@ namespace Projeto.Moope.API.Configurations
         {
             CreateMap<Plano, CreatePlanoDto>().ReverseMap();
             CreateMap<Plano, UpdatePlanoDto>().ReverseMap();
-
-            
+            CreateMap<Plano, ListPlanoDto>().ReverseMap();
 
             // Mapeamentos do Cliente
             // CreateMap<Cliente, ClienteDto>()
@@ -153,6 +154,8 @@ namespace Projeto.Moope.API.Configurations
                 .ForMember(dest => dest.Cidade, opt => opt.MapFrom(src => (string)null))
                 .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => (string)null))
                 .ForMember(dest => dest.Cep, opt => opt.MapFrom(src => (string)null));
+
+
         }
     }
 }

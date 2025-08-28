@@ -34,5 +34,11 @@ namespace Projeto.Moope.Core.Models
         // [ForeignKey("IdentityUserId")]
         // public string IdentityUserId { get; set; }
         public Endereco Endereco { get; set; }
+        [NotMapped]
+        public PessoaFisica PessoaFisica { get; set; }
+        [NotMapped]
+        public PessoaJuridica PessoaJuridica { get; set; }
+        [NotMapped]
+        public object IdentityUser { get; set; }
     }
 } 

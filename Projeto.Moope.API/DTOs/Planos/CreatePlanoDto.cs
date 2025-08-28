@@ -5,11 +5,11 @@ namespace Projeto.Moope.API.DTOs.Planos
 {
     public class CreatePlanoDto
     {
-        [Required(ErrorMessage = "O campo Código é obrigatório")]
+        [Required(ErrorMessage = "O campo Cï¿½digo ï¿½ obrigatï¿½rio")]
         public string Codigo { get; set; }
-        [Required(ErrorMessage = "O campo Descrição é obrigatório")]
+        [Required(ErrorMessage = "O campo Descriï¿½ï¿½o ï¿½ obrigatï¿½rio")]
         public string Descricao { get; set; }
-        [Required(ErrorMessage = "O campo Valor é obrigatório")]
+        [Required(ErrorMessage = "O campo Valor ï¿½ obrigatï¿½rio")]
         [DecimalRange(0.01, 99999999.99, ErrorMessage = "O Valor deve estar entre 0,01 e 99.999.999,99.")]
         public decimal Valor { get; set; }
         public bool Status { get; set; }

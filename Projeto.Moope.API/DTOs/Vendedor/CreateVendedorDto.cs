@@ -39,6 +39,7 @@ namespace Projeto.Moope.API.DTOs.Revendedor
         public string NomeFantasia { get; set; }
         public string InscricaoEstadual { get; set; }
         public decimal PercentualComissao { get; set; }
+        public string ChavePix { get; set; }
     }
 }
 

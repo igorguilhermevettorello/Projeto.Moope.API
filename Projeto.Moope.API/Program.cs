@@ -32,12 +32,21 @@ app.UseSeedData();
 
 app.UseSwaggerConfig();
 
+// Configurar CORS baseado no ambiente - DEVE vir antes da autenticação
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("DevelopmentCorsPolicy");
+}
+else
+{
+    app.UseCors("CorsPolicy");
+}
+
 app.UseHttpsRedirection();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseCors("CorsPolicy");
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -3,6 +3,7 @@ using Projeto.Moope.API.DTOs.Clientes;
 using Projeto.Moope.API.DTOs.Planos;
 using Projeto.Moope.API.DTOs.Validators;
 using Projeto.Moope.API.Utils;
+using Projeto.Moope.Core.Commands.Clientes.AlterarSenha;
 using Projeto.Moope.Core.Commands.Clientes.Atualizar;
 using Projeto.Moope.Core.Commands.Emails;
 using Projeto.Moope.Core.Commands.Vendas;
@@ -27,9 +28,9 @@ namespace Projeto.Moope.API.Configurations
         {
             RegisterApplicationDependencies(services, configuration);
             RegisterRepositories(services);
+            RegisterMediatR(services);
             RegisterServices(services);
             RegisterValidators(services);
-            RegisterMediatR(services);
             return services;
         }
 
@@ -78,6 +79,8 @@ namespace Projeto.Moope.API.Configurations
             service.AddScoped<IValidator<CreatePlanoDto>, PlanoDtoValidator>();
             service.AddScoped<IValidator<CreateClienteDto>, CreateClienteDtoValidator>();
             service.AddScoped<IValidator<UpdateClienteDto>, UpdateClienteDtoValidator>();
+            service.AddScoped<IValidator<AlterarSenhaClienteDto>, AlterarSenhaClienteDtoValidator>();
+            service.AddScoped<IValidator<AlterarSenhaAdminDto>, AlterarSenhaAdminDtoValidator>();
             // service.AddScoped<IValidator<CreateVendaDto>, CreateVendaDtoValidator>();
         }
 
@@ -86,6 +89,8 @@ namespace Projeto.Moope.API.Configurations
             service.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ProcessarVendaCommand).Assembly));
             service.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SalvarEmailCommand).Assembly));
             service.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AtualizarClienteCommand).Assembly));
+            service.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AlterarSenhaClienteCommand).Assembly));
+            service.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AlterarSenhaAdminCommand).Assembly));
         }
     }
 }

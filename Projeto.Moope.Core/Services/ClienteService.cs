@@ -1,3 +1,5 @@
+using MediatR;
+using Projeto.Moope.Core.Commands.Clientes.AlterarSenha;
 using Projeto.Moope.Core.Enums;
 using Projeto.Moope.Core.Interfaces.Notifications;
 using Projeto.Moope.Core.Interfaces.Repositories;
@@ -16,25 +18,28 @@ namespace Projeto.Moope.Core.Services
         private readonly IPessoaFisicaRepository _pessoaFisicaRepository;
         private readonly IPessoaJuridicaRepository _pessoaJuridicaRepository;
         private readonly IIdentityUserService _identityUserService;
+        private readonly IMediator _mediator;
 
         public ClienteService(
             IClienteRepository clienteRepository,
             IPessoaFisicaRepository pessoaFisicaRepository,
             IPessoaJuridicaRepository pessoaJuridicaRepository,
             IIdentityUserService identityUserService,
+            IMediator mediator,
             INotificador notificador) : base(notificador)
         {
             _clienteRepository = clienteRepository;
             _pessoaFisicaRepository = pessoaFisicaRepository;
             _pessoaJuridicaRepository = pessoaJuridicaRepository;
             _identityUserService = identityUserService;
+            _mediator = mediator;
         }
 
         public async Task<Cliente> BuscarPorIdAsNotrackingAsync(Guid id)
         {
             return await _clienteRepository.BuscarPorIdAsNotrackingAsync(id);
         }
-            
+
         public async Task<Cliente> BuscarPorIdAsync(Guid id)
         {
             return await _clienteRepository.BuscarPorIdAsync(id);
@@ -73,11 +78,21 @@ namespace Projeto.Moope.Core.Services
             return await _clienteRepository.BuscarTodosAsync();
         }
 
+        public async Task<IEnumerable<T>> BuscarClientesComDadosAsync<T>()
+        {
+            return await _clienteRepository.BuscarClientesComDadosAsync<T>();
+        }
+
+        public async Task<T?> BuscarClientePorIdComDadosAsync<T>(Guid id)
+        {
+            return await _clienteRepository.BuscarClientePorIdComDadosAsync<T>(id);
+        }
+
         public async Task<Result<Cliente>> SalvarAsync(Cliente cliente)
         {
             if (!ExecutarValidacao(new ClienteValidator(), cliente))
                 return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };
-    
+
             var entidade = await _clienteRepository.SalvarAsync(cliente);
             return new Result<Cliente>()
             {
@@ -86,8 +101,9 @@ namespace Projeto.Moope.Core.Services
                 Mensagem = "Cliente salvo com sucesso"
             };
         }
-        
-        public async Task<Result<Cliente>> SalvarAsync(Cliente cliente, PessoaFisica pessoaFisica, PessoaJuridica pessoaJuridica)
+
+        public async Task<Result<Cliente>> SalvarAsync(Cliente cliente, PessoaFisica pessoaFisica,
+            PessoaJuridica pessoaJuridica)
         {
             if (!ExecutarValidacao(new ClienteValidator(), cliente))
                 return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };
@@ -100,11 +116,12 @@ namespace Projeto.Moope.Core.Services
                     Notificar("CpfCnpj", "Cnpj já cadastrado");
                     return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };
                 }
+
                 pessoaJuridica.Created = DateTime.UtcNow;
                 pessoaJuridica.Cnpj = Documentos.OnlyDigits(pessoaJuridica.Cnpj);
                 var _ = await _pessoaJuridicaRepository.SalvarAsync(pessoaJuridica);
             }
-            
+
             if (cliente.TipoPessoa == TipoPessoa.FISICA)
             {
                 var pf = await _pessoaFisicaRepository.BuscarPorCpfAsync(Documentos.OnlyDigits(cliente.CpfCnpj));
@@ -125,11 +142,10 @@ namespace Projeto.Moope.Core.Services
                     Console.WriteLine(ex.Message);
                     throw;
                 }
-                
             }
-                
+
             var entidade = await _clienteRepository.SalvarAsync(cliente);
-            
+
             return new Result<Cliente>()
             {
                 Status = true,
@@ -138,7 +154,8 @@ namespace Projeto.Moope.Core.Services
             };
         }
 
-        public async Task<Result<Cliente>> AtualizarAsync(Cliente cliente, PessoaFisica pessoaFisica, PessoaJuridica pessoaJuridica)
+        public async Task<Result<Cliente>> AtualizarAsync(Cliente cliente, PessoaFisica pessoaFisica,
+            PessoaJuridica pessoaJuridica)
         {
             if (!ExecutarValidacao(new ClienteValidator(), cliente))
                 return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };
@@ -153,49 +170,48 @@ namespace Projeto.Moope.Core.Services
                 if (pj != null && cliente.Id != pj.Id)
                 {
                     Notificar("CpfCnpj", "Cnpj já cadastrado");
-                    return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };        
+                    return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };
                 }
-                
+
                 var _pf = await _pessoaFisicaRepository.BuscarPorIdAsync(cliente.Id);
                 if (_pf != null)
                     await _pessoaFisicaRepository.RemoverAsync(_pf.Id);
-                
+
                 var _pj = await _pessoaJuridicaRepository.BuscarPorIdAsync(cliente.Id);
                 if (_pj != null)
                     await _pessoaJuridicaRepository.RemoverAsync(_pj.Id);
-                
+
                 pessoaJuridica.Created = DateTime.UtcNow;
                 pessoaJuridica.Cnpj = Documentos.OnlyDigits(pessoaJuridica.Cnpj);
                 var _ = await _pessoaJuridicaRepository.SalvarAsync(pessoaJuridica);
-                
             }
 
             if (cliente.TipoPessoa == TipoPessoa.FISICA)
             {
                 var pf = await _pessoaFisicaRepository.BuscarPorCpfAsync(Documentos.OnlyDigits(cliente.CpfCnpj));
-                if (pf != null && pf.Id != cliente.Id)   
+                if (pf != null && pf.Id != cliente.Id)
                 {
                     Notificar("CpfCnpj", "Cpf já cadastrado");
                     return new Result<Cliente>() { Status = false, Mensagem = "Dados do cliente são inválidos" };
                 }
-            
+
                 var _pf = await _pessoaFisicaRepository.BuscarPorIdAsync(cliente.Id);
                 if (_pf != null)
                     await _pessoaFisicaRepository.RemoverAsync(_pf.Id);
-                
+
                 var _pj = await _pessoaJuridicaRepository.BuscarPorIdAsync(cliente.Id);
                 if (_pj != null)
                     await _pessoaJuridicaRepository.RemoverAsync(_pj.Id);
-                
+
                 pessoaFisica.Cpf = Documentos.OnlyDigits(pessoaFisica.Cpf);
                 pessoaFisica.Created = DateTime.UtcNow;
                 await _pessoaFisicaRepository.SalvarAsync(pessoaFisica);
             }
-              
+
             clienteAtual.TipoPessoa = cliente.TipoPessoa;
             clienteAtual.Updated = DateTime.UtcNow;
             var entidade = await _clienteRepository.AtualizarAsync(clienteAtual);
-            
+
             return new Result<Cliente>()
             {
                 Status = true,
@@ -203,7 +219,7 @@ namespace Projeto.Moope.Core.Services
                 Mensagem = "Cliente salvo com sucesso"
             };
         }
-        
+
         public async Task<Result<Cliente>> AtualizarAsync(Cliente cliente)
         {
             if (!ExecutarValidacao(new ClienteValidator(), cliente))
@@ -265,6 +281,42 @@ namespace Projeto.Moope.Core.Services
             {
                 Notificar("Cliente", $"Erro ao remover cliente: {ex.Message}");
                 return false;
+            }
+        }
+
+        public async Task<Result> AlterarSenhaClienteAsync(Guid clienteId, string senhaAtual, string novaSenha)
+        {
+            try
+            {
+                var command = new AlterarSenhaClienteCommand(clienteId, senhaAtual, novaSenha);
+                return await _mediator.Send(command);
+            }
+            catch (Exception ex)
+            {
+                Notificar("Mensagem", $"Erro ao alterar senha do cliente: {ex.Message}");
+                return new Result
+                {
+                    Status = false,
+                    Mensagem = "Erro interno do sistema"
+                };
+            }
+        }
+
+        public async Task<Result> AlterarSenhaAdminAsync(Guid clienteId, string novaSenha)
+        {
+            try
+            {
+                var command = new AlterarSenhaAdminCommand(clienteId, novaSenha);
+                return await _mediator.Send(command);
+            }
+            catch (Exception ex)
+            {
+                Notificar("Mensagem", $"Erro ao alterar senha do cliente: {ex.Message}");
+                return new Result
+                {
+                    Status = false,
+                    Mensagem = "Erro interno do sistema"
+                };
             }
         }
     }

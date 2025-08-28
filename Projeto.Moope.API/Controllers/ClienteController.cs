@@ -55,29 +55,39 @@ namespace Projeto.Moope.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
-        [ProducesResponseType(typeof(List<ListClienteDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<ClienteQueryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> BuscarTodosAsync()
         {
-            var clientes = await _clienteService.BuscarTodosAsync();
-            return Ok(_mapper.Map<IEnumerable<ListClienteDto>>(clientes));
+            var clientes = await _clienteService.BuscarClientesComDadosAsync<ClienteQueryDto>();
+            return Ok(clientes);
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
-        [ProducesResponseType(typeof(ListClienteDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ClienteDetalheDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> BuscarPorIdAsync(Guid id)
         {
-            var cliente = await _clienteService.BuscarPorIdAsync(id);
-            if (cliente == null) 
-                return NotFound("Cliente não encontrado");
+            if (id == Guid.Empty)
+            {
+                ModelState.AddModelError("Id", "ID do cliente é obrigatório");
+                return CustomResponse(ModelState);
+            }
+
+            var cliente = await _clienteService.BuscarClientePorIdComDadosAsync<ClienteDetalheDto>(id);
             
-            return Ok(_mapper.Map<ListClienteDto>(cliente));
+            if (cliente == null)
+            {
+                return NotFound("Cliente não encontrado");
+            }
+
+            return Ok(cliente);
         }
 
         [HttpGet("email/{email}")]
@@ -231,10 +241,94 @@ namespace Projeto.Moope.API.Controllers
         }
 
         [HttpGet("tipo-pessoa")]
+        [ProducesResponseType(typeof(UpdateClienteDto), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> BuscarTipoPessoasAsync()
         {
             var lista = EnumHelper.GetEnumAsList<TipoPessoa>();
             return Ok(lista);
+        }
+
+        [HttpPost("alterar-senha")]
+        [Authorize(Roles = nameof(TipoUsuario.Cliente))]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> AlterarSenhaAsync([FromBody] AlterarSenhaClienteDto alterarSenhaDto)
+        {
+            if (alterarSenhaDto == null)
+            {
+                NotificarErro("Mensagem", "As informações da alteração de senha não foram carregadas. Tente novamente.");
+                return CustomResponse();
+            }
+
+            if (!ModelState.IsValid)
+                return CustomResponse(ModelState);
+
+            try
+            {
+                // O cliente só pode alterar sua própria senha
+                var clienteId = UsuarioId;
+                
+                if (clienteId == Guid.Empty)
+                {
+                    NotificarErro("Usuário", "Usuário não identificado");
+                    return CustomResponse();
+                }
+
+                var resultado = await _clienteService.AlterarSenhaClienteAsync(
+                    clienteId, 
+                    alterarSenhaDto.SenhaAtual, 
+                    alterarSenhaDto.NovaSenha);
+
+                if (!resultado.Status)
+                    return CustomResponse();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                NotificarErro("Mensagem", ex.Message);
+                return CustomResponse();
+            }
+        }
+
+        [HttpPost("alterar-senha-admin")]
+        [Authorize(Roles = $"{nameof(TipoUsuario.Administrador)},{nameof(TipoUsuario.Vendedor)}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> AlterarSenhaAdminAsync([FromBody] AlterarSenhaAdminDto alterarSenhaDto)
+        {
+            if (alterarSenhaDto == null)
+            {
+                NotificarErro("Mensagem", "As informações da alteração de senha não foram carregadas. Tente novamente.");
+                return CustomResponse();
+            }
+
+            if (!ModelState.IsValid)
+                return CustomResponse(ModelState);
+
+            try
+            {
+                var resultado = await _clienteService.AlterarSenhaAdminAsync(
+                    alterarSenhaDto.ClienteId, 
+                    alterarSenhaDto.NovaSenha);
+
+                if (!resultado.Status)
+                    return CustomResponse();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                NotificarErro("Mensagem", ex.Message);
+                return CustomResponse();
+            }
         }
 
     }

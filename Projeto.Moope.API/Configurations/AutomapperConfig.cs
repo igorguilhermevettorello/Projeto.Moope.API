@@ -21,7 +21,10 @@ namespace Projeto.Moope.API.Configurations
             CreateMap<Plano, CreatePlanoDto>().ReverseMap();
             CreateMap<Plano, UpdatePlanoDto>().ReverseMap();
             CreateMap<Plano, ListPlanoDto>().ReverseMap();
+            CreateMap<Plano, DetailPlanoDto>().ReverseMap();
 
+            
+            
             // Mapeamentos do Cliente
             // CreateMap<Cliente, ClienteDto>()
             //     .ForMember(dest => dest.PapelNome, opt => opt.MapFrom(src => src.Papel.Nome.ToString()));
@@ -80,6 +83,8 @@ namespace Projeto.Moope.API.Configurations
                 .ForMember(dest => dest.NomeCliente, opt => opt.MapFrom(src => src.NomeCliente))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Telefone, opt => opt.MapFrom(src => src.Telefone))
+                .ForMember(dest => dest.TipoPessoa, opt => opt.MapFrom(src => src.TipoPessoa))
+                .ForMember(dest => dest.CpfCnpj, opt => opt.MapFrom(src => src.CpfCnpj))
                 .ForMember(dest => dest.NumeroCartao, opt => opt.MapFrom(src => src.NumeroCartao))
                 .ForMember(dest => dest.Cvv, opt => opt.MapFrom(src => src.Cvv))
                 .ForMember(dest => dest.DataValidade, opt => opt.MapFrom(src => src.DataValidade))

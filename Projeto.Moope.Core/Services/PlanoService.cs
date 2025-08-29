@@ -22,7 +22,18 @@ namespace Projeto.Moope.Core.Services
         {
             return await _planoRepository.BuscarPorIdAsync(id);
         }
+        
+        public async Task<Plano> BuscarPorIdAsNotrackingAsync(Guid id)
+        {
+            return await _planoRepository.BuscarPorIdAsNotrackingAsync(id);
+        }
 
+        public async Task<Plano> BuscarPorPlanoSelecionadoAsync(string codigo)
+        {
+            return await _planoRepository.BuscarPorPlanoSelecionadoAsync(codigo);
+        }
+        
+        
         public async Task<IEnumerable<Plano>> BuscarTodosAsync()
         {
             return await _planoRepository.BuscarTodosAsync();

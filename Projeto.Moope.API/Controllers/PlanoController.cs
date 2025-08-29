@@ -51,13 +51,31 @@ namespace Projeto.Moope.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = nameof(TipoUsuario.Administrador))]
+        [ProducesResponseType(typeof(DetailPlanoDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> BuscarPorIdAsync(Guid id)
         {
             var plano = await _planoService.BuscarPorIdAsync(id);
             if (plano == null) return NotFound();
-            return Ok(_mapper.Map<CreatePlanoDto>(plano));
+            return Ok(_mapper.Map<DetailPlanoDto>(plano));
         }
 
+        [HttpGet("selecionado/{codigo}")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(DetailPlanoDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> BuscarPorPlanoSelecionadoAsync(string codigo)
+        {
+            var plano = await _planoService.BuscarPorPlanoSelecionadoAsync(codigo);
+            if (plano == null) return NotFound();
+            return Ok(_mapper.Map<DetailPlanoDto>(plano));
+        }
+        
         [HttpPost]
         [Authorize(Roles = nameof(TipoUsuario.Administrador))]
         [ProducesResponseType(typeof(CreatePlanoDto), StatusCodes.Status201Created)]

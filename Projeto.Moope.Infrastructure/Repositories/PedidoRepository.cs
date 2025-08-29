@@ -32,6 +32,14 @@ namespace Projeto.Moope.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Pedido?> BuscarPorGalaxPayIdAsync(int galaxPayId)
+        {
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Vendedor)
+                .FirstOrDefaultAsync(p => p.GalaxPayId == galaxPayId);
+        }
+
         public async Task<Pedido> BuscarPorIdAsync(Guid id)
         {
             return await _context.Pedidos

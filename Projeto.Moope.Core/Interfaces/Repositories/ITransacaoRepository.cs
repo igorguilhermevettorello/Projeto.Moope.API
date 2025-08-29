@@ -6,5 +6,6 @@ namespace Projeto.Moope.Core.Interfaces.Repositories
     public interface ITransacaoRepository : IRepository<Transacao>
     {
         Task<Transacao> BuscarPorPedidoIdAsync(Guid pedidoId);
+        Task<Transacao?> BuscarPorGalaxPayIdAsync(int galaxPayId);
     }
 }

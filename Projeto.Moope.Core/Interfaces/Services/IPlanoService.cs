@@ -6,6 +6,8 @@ namespace Projeto.Moope.Core.Interfaces.Services
     public interface IPlanoService
     {
         Task<Plano> BuscarPorIdAsync(Guid id);
+        Task<Plano> BuscarPorIdAsNotrackingAsync(Guid id);
+        Task<Plano> BuscarPorPlanoSelecionadoAsync(string codigo);
         Task<IEnumerable<Plano>> BuscarTodosAsync();
         Task<Result<Plano>> SalvarAsync(Plano plano);
         Task<Result<Plano>> AtualizarAsync(Plano plano);

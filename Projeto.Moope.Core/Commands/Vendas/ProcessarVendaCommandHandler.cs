@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Projeto.Moope.API.DTOs;
 using Projeto.Moope.Core.Commands.Base;
 using Projeto.Moope.Core.DTOs.Pagamentos;
@@ -9,6 +10,7 @@ using Projeto.Moope.Core.Interfaces.UnitOfWork;
 using Projeto.Moope.Core.Models;
 using Projeto.Moope.Core.Models.Validators.Base;
 using Projeto.Moope.Core.Notifications;
+using Projeto.Moope.Core.Utils;
 
 namespace Projeto.Moope.Core.Commands.Vendas
 {
@@ -22,6 +24,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
         private readonly IPlanoRepository _planoRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificador _notificador;
+        private readonly ILogger<ProcessarVendaCommandHandler> _logger;
 
         public ProcessarVendaCommandHandler(
             IPaymentGatewayStrategy paymentGateway,
@@ -31,7 +34,8 @@ namespace Projeto.Moope.Core.Commands.Vendas
             ITransacaoRepository transacaoRepository,
             IPlanoRepository planoRepository,
             IUnitOfWork unitOfWork,
-            INotificador notificador)
+            INotificador notificador,
+            ILogger<ProcessarVendaCommandHandler> logger)
         {
             _paymentGateway = paymentGateway;
             _clienteRepository = clienteRepository;
@@ -41,6 +45,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
             _planoRepository = planoRepository;
             _unitOfWork = unitOfWork;
             _notificador = notificador;
+            _logger = logger;
         }
 
         public async Task<Result<Pedido>> Handle(ProcessarVendaCommand request, CancellationToken cancellationToken)
@@ -55,7 +60,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
                     {
                         _notificador.Handle(new Notificacao()
                         {
-                            Campo = "Vendedor",
+                            Campo = "Mensagem",
                             Mensagem = "Vendedor não encontrado"
                         });
 
@@ -73,7 +78,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
                 {
                     _notificador.Handle(new Notificacao()
                     {
-                        Campo = "Plano",
+                        Campo = "Mensagem",
                         Mensagem = "Plano não encontrado"
                     });
                     return new Result<Pedido> 
@@ -88,7 +93,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
                 {
                     _notificador.Handle(new Notificacao()
                     {
-                        Campo = "Plano",
+                        Campo = "Mensagem",
                         Mensagem = "Plano inativo"
                     });
                     return new Result<Pedido> 
@@ -118,6 +123,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
                     PlanoCodigo = plano.Codigo,
                     
                     Total = totalCalculado,
+                    StatusAssinatura = StatusAssinatura.WaitingPayment,
                     Status = "PENDENTE",
                     StatusDescricao = "Aguardando criação da subscription",
                     Created = DateTime.UtcNow,
@@ -125,6 +131,50 @@ namespace Projeto.Moope.Core.Commands.Vendas
                 };
 
                 await _pedidoRepository.SalvarAsync(pedido);
+
+                // Verificar se o cliente já existe no gateway de pagamento
+                var clienteExisteNoGateway = await _paymentGateway.BuscarClientePorEmailAsync(request.Email);
+                string? customerId = null;
+
+                if (clienteExisteNoGateway.Type && clienteExisteNoGateway.HasCustomers)
+                {
+                    // Cliente já existe no gateway
+                    customerId = clienteExisteNoGateway.FirstCustomer?.GalaxPayId.ToString();
+                    _logger.LogInformation("Cliente encontrado no gateway CelPay. CustomerId: {CustomerId}", customerId);
+                }
+                else
+                {
+                    // Cliente não existe, criar no gateway
+                    var customerDto = new CelPayCustomerRequestDto
+                    {
+                        MyId = request.ClienteId?.ToString(),
+                        Name = request.NomeCliente,
+                        Document = request.CpfCnpj,
+                        Emails = new List<string> { request.Email },
+                        Phones = new List<string> { request.Telefone }
+                    };
+
+                    var resultadoCriacaoCliente = await _paymentGateway.CriarClienteAsync(customerDto);
+                    
+                    if (resultadoCriacaoCliente.Type && resultadoCriacaoCliente.HasCustomers)
+                    {
+                        customerId = resultadoCriacaoCliente.FirstCustomer?.GalaxPayId.ToString();
+                        _logger.LogInformation("Cliente criado no gateway CelPay. CustomerId: {CustomerId}", customerId);
+                    }
+                    else
+                    {
+                        _notificador.Handle(new Notificacao()
+                        {
+                            Campo = "Mensagem",
+                            Mensagem = "Erro ao criar cliente no gateway de pagamento"
+                        });
+                        return new Result<Pedido> 
+                        { 
+                            Status = false, 
+                            Mensagem = "Erro ao criar cliente no gateway de pagamento"
+                        };
+                    }
+                }
 
                 // Processar subscription com plano via gateway
                 var subscriptionDto = new CelPaySubscriptionRequestDto
@@ -158,52 +208,67 @@ namespace Projeto.Moope.Core.Commands.Vendas
                     }
                 };
 
+                // requisição para a CelPay
                 var resultadoPagamento = await _paymentGateway.CriarSubscriptionComPlanoAsync(subscriptionDto);
 
-                // Atualizar status do pedido e criar transação
-                if (resultadoPagamento.Status == "ACTIVE" || resultadoPagamento.Status == "PENDING")
-                {
-                    pedido.Status = "APROVADO";
-                    pedido.StatusDescricao = "Subscription criada com sucesso";
-                    pedido.Updated = DateTime.UtcNow;
+                // Mapear status da assinatura
+                // var statusAssinatura = StatusMapper.MapearStatusAssinatura(resultadoPagamento.Status, resultadoPagamento.ErrorMessage ?? "");
+                // var statusAssinaturaDescricao = StatusMapper.ObterDescricaoEnum(statusAssinatura);
 
+                var dadosStatus = EnumHelper.GetEnumInfo<StatusAssinatura>(resultadoPagamento.Status);
+                pedido.StatusAssinatura = dadosStatus.Value.EnumValue;
+                pedido.Status = resultadoPagamento.Status;
+                pedido.StatusDescricao = dadosStatus?.Description;
+                pedido.GalaxPayId = int.TryParse(resultadoPagamento.GalaxPayId, out var galaxPayId) ? galaxPayId : null;
+                pedido.Updated = DateTime.UtcNow;
+
+                // Processar transações retornadas pela plataforma
+                foreach (var transaction in resultadoPagamento.Transactions)
+                {
+                    // var statusPagamento = StatusMapper.MapearStatusPagamento(transaction.Status, transaction.StatusDescription);
+                    // var statusPagamentoDescricao = StatusMapper.ObterDescricaoEnum(statusPagamento);
+                
+                    var transactionStatus = EnumHelper.GetEnumInfo<StatusPagamento>(transaction.Status);
+                    
                     var transacao = new Transacao
                     {
                         PedidoId = pedido.Id,
-                        Valor = request.Valor,
-                        DataPagamento = DateTime.UtcNow,
-                        Status = "APROVADA",
-                        StatusDescricao = "Subscription criada com sucesso",
+                        Valor = transaction.Value / 100m, // Converter de centavos para reais
+                        DataPagamento = DateTime.TryParse(transaction.PaydayDate, out var paydayDate) ? paydayDate : DateTime.UtcNow,
+                        StatusPagamento = transactionStatus.Value.EnumValue,
+                        Status = transaction.Status,
+                        StatusDescricao = transactionStatus?.Description,
+                        GalaxPayId = transaction.GalaxPayId,
                         MetodoPagamento = "SUBSCRIPTION",
-                        Created = DateTime.UtcNow,
+                        Created = DateTime.TryParse(transaction.CreatedAt, out var createdAt) ? createdAt : DateTime.UtcNow,
                         Updated = DateTime.UtcNow
                     };
 
                     await _transacaoRepository.SalvarAsync(transacao);
+                }
 
+                // Verificar se a subscription foi criada com sucesso
+                if (dadosStatus.Value.EnumValue == StatusAssinatura.Active || dadosStatus.Value.EnumValue == StatusAssinatura.WaitingPayment)      
+                {
                     return new Result<Pedido> 
                     { 
                         Status = true, 
-                        Mensagem = "Subscription criada com sucesso",
+                        Mensagem = "Pedido criado com sucesso!",
                         Dados = pedido
                     };
                 }
                 else
                 {
-                    pedido.Status = "REJEITADO";
-                    pedido.StatusDescricao = "Falha na criação da subscription";
-                    pedido.Updated = DateTime.UtcNow;
-
                     _notificador.Handle(new Notificacao()
                     {
-                        Campo = "Subscription",
-                        Mensagem = resultadoPagamento.ErrorMessage ?? "Subscription rejeitada"
+                        Campo = "Mensagem",
+                        Mensagem = resultadoPagamento.ErrorMessage ?? "Pagamento rejeitado. Verifique os dados e tente novamente.",
                     });
 
                     return new Result<Pedido> 
                     { 
                         Status = false, 
-                        Mensagem = resultadoPagamento.ErrorMessage ?? "Subscription rejeitada"
+                        Mensagem = resultadoPagamento.ErrorMessage ?? "Pagamento rejeitado. Verifique os dados e tente novamente."
                     };
                 }
             }
@@ -211,7 +276,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
             {
                 _notificador.Handle(new Notificacao()
                 {
-                    Campo = "Erro",
+                    Campo = "Mensagem",
                     Mensagem = $"Erro ao processar venda: {ex.Message}"
                 });
                 return new Result<Pedido>
@@ -243,5 +308,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
             
             throw new ArgumentException("Formato de data de validade inválido. Use MM/YY");
         }
+
+
     }
 }

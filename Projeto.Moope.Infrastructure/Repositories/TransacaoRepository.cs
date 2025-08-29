@@ -18,6 +18,13 @@ namespace Projeto.Moope.Infrastructure.Repositories
         {
             return await _context.Transacoes.Include(t => t.Pedido).FirstOrDefaultAsync(t => t.Pedido.Id == pedidoId);
         }
+
+        public async Task<Transacao?> BuscarPorGalaxPayIdAsync(int galaxPayId)
+        {
+            return await _context.Transacoes
+                .Include(t => t.Pedido)
+                .FirstOrDefaultAsync(t => t.GalaxPayId == galaxPayId);
+        }
             
         public async Task<Transacao> BuscarPorIdAsync(Guid id)
         {

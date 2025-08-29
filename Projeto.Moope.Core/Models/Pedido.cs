@@ -1,5 +1,6 @@
 using Projeto.Moope.Core.Models.Base;
 using System.ComponentModel.DataAnnotations.Schema;
+using Projeto.Moope.Core.Enums;
 
 namespace Projeto.Moope.Core.Models
 {
@@ -17,6 +18,7 @@ namespace Projeto.Moope.Core.Models
         public string PlanoCodigo { get; set; }
         
         public decimal Total { get; set; }
+        public StatusAssinatura StatusAssinatura { get; set; }
         public string? Status { get; set; }
         public string? StatusDescricao { get; set; }
         public int? GalaxPayId { get; set; }

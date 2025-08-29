@@ -7,5 +7,6 @@ namespace Projeto.Moope.Core.Interfaces.Repositories
     {
         Task<IEnumerable<Pedido>> BuscarPorVendedorIdAsync(Guid vendedorId);
         Task<IEnumerable<Pedido>> BuscarPorClienteIdAsync(Guid clienteId);
+        Task<Pedido?> BuscarPorGalaxPayIdAsync(int galaxPayId);
     }
 }

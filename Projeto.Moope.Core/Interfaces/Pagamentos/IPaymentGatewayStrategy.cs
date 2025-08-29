@@ -15,6 +15,10 @@ namespace Projeto.Moope.Core.Interfaces.Pagamentos
         Task<CelPaySubscriptionResponseDto> CancelarSubscriptionAsync(CelPayCancelSubscriptionDto cancelDto);
         Task<CelPaySubscriptionResponseDto> AtualizarSubscriptionAsync(CelPayUpdateSubscriptionDto updateDto);
         
+        // Métodos para clientes
+        Task<CelPayCustomerResponseDto> BuscarClientePorEmailAsync(string email);
+        Task<CelPayCustomerResponseDto> CriarClienteAsync(CelPayCustomerRequestDto customerDto);
+        
         string NomeGateway { get; }
     }
 }

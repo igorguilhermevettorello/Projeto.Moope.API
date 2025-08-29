@@ -18,7 +18,6 @@
     <Folder Include="Models\Validators\PessoaFisica\" />
     <Folder Include="Models\Validators\PessoaJuridica\" />
     <Folder Include="Models\Validators\Plano\" />
-    <Folder Include="Utils\" />
     <Folder Include="Notifications\" />
   </ItemGroup>
 

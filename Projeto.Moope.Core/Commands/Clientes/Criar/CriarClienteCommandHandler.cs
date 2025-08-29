@@ -75,13 +75,13 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
                     _notificador.Handle(new Notificacao()
                     {
                         Campo = "Mensagem",
-                        Mensagem = rsIdentity.Mensagem ?? "Erro ao criar usuário no sistema"
+                        Mensagem = rsIdentity.Mensagem ?? "Falha ao criar usuário no sistema"
                     });
 
                     return new Result<Guid>
                     {
                         Status = false,
-                        Mensagem = rsIdentity.Mensagem ?? "Erro ao criar usuário no sistema"
+                        Mensagem = rsIdentity.Mensagem ?? "Falha ao criar usuário no sistema"
                     };
                 }
 
@@ -117,7 +117,7 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
 
                 _notificador.Handle(new Notificacao()
                 {
-                    Campo = "Erro",
+                    Campo = "Mensagem",
                     Mensagem = ex.Message
                 });
 
@@ -139,7 +139,7 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
                 usuario.Id = identityUser.Id;
                 var rsUsuario = await _usuarioService.SalvarAsync(usuario);
                 if (!rsUsuario.Status)
-                    throw new Exception(rsUsuario.Mensagem ?? "Erro ao salvar usuário");
+                    throw new Exception(rsUsuario.Mensagem ?? "Falha ao salvar usuário");
             }
 
             cliente.Id = identityUser.Id;
@@ -152,7 +152,7 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
             });
 
             if (!rsPapel.Status)
-                throw new Exception(rsPapel.Mensagem ?? "Erro ao salvar papel");
+                throw new Exception(rsPapel.Mensagem ?? "Falha ao salvar papel");
 
             var pf = await _pessoaFisicaRepository.BuscarPorIdAsNotrackingAsync(identityUser.Id);
             var pj = await _pessoaJuridicaRepository.BuscarPorIdAsNotrackingAsync(identityUser.Id);
@@ -160,13 +160,13 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
             {
                 var rsCliente = await _clienteService.SalvarAsync(cliente, pessoaFisica, pessoaJuridica);
                 if (!rsCliente.Status)
-                    throw new Exception(rsCliente.Mensagem ?? "Erro ao salvar cliente");
+                    throw new Exception(rsCliente.Mensagem ?? "Falha ao salvar cliente");
             }
             else
             {
                 var rsCliente = await _clienteService.SalvarAsync(cliente);
                 if (!rsCliente.Status)
-                    throw new Exception(rsCliente.Mensagem ?? "Erro ao salvar cliente");
+                    throw new Exception(rsCliente.Mensagem ?? "Falha ao salvar cliente");
 
             }
         }
@@ -189,14 +189,14 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
             {
                 var rsEndereco = await _enderecoService.SalvarAsync(endereco);
                 if (!rsEndereco.Status)
-                    throw new Exception(rsEndereco.Mensagem ?? "Erro ao salvar endereço");
+                    throw new Exception(rsEndereco.Mensagem ?? "Falha ao salvar endereço");
 
                 usuario.EnderecoId = rsEndereco.Dados.Id;
             }
 
             var rsUsuario = await _usuarioService.SalvarAsync(usuario);
             if (!rsUsuario.Status)
-                throw new Exception(rsUsuario.Mensagem ?? "Erro ao salvar usuário");
+                throw new Exception(rsUsuario.Mensagem ?? "Falha ao salvar usuário");
 
             // Configurar cliente e pessoas
             var clienteId = rsUsuario.Dados.Id;
@@ -213,7 +213,7 @@ namespace Projeto.Moope.Core.Commands.Clientes.Criar
             // Salvar cliente com pessoa física ou jurídica
             var rsCliente = await _clienteService.SalvarAsync(cliente, pessoaFisica, pessoaJuridica);
             if (!rsCliente.Status)
-                throw new Exception(rsCliente.Mensagem ?? "Erro ao salvar cliente");
+                throw new Exception(rsCliente.Mensagem ?? "Falha ao salvar cliente");
 
             return clienteId;
         }

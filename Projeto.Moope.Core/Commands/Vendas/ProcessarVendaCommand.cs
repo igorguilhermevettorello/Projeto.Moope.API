@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Projeto.Moope.Core.Commands.Base;
+using Projeto.Moope.Core.Enums;
 using Projeto.Moope.Core.Models;
 using Projeto.Moope.Core.Models.Validators.Base;
 
@@ -16,6 +17,11 @@ namespace Projeto.Moope.Core.Commands.Vendas
         
         [Required(ErrorMessage = "O campo Telefone é obrigatório")]
         public string Telefone { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O campo TipoPessoa é obrigatório")]
+        public TipoPessoa TipoPessoa { get; set; }
+        
+        public string? CpfCnpj { get; set; }
         
         [Required(ErrorMessage = "Número do cartão é obrigatório")]
         [RegularExpression(@"^\d{13,19}$", ErrorMessage = "Número do cartão deve ter entre 13 e 19 dígitos")]

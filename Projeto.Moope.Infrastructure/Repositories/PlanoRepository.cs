@@ -16,5 +16,10 @@ namespace Projeto.Moope.Infrastructure.Repositories
         {
             return await _dbSet.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
         }
+        
+        public async Task<Plano> BuscarPorPlanoSelecionadoAsync(string codigo)
+        {
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(c => c.Codigo.Equals(codigo));
+        }
     }
 } 

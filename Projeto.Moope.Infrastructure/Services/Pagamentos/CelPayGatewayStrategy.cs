@@ -289,15 +289,16 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                             // Converter para o formato de resposta padrão
                             var subscriptionResponse = new CelPaySubscriptionResponseDto
                             {
-                                Id = successResponse.Subscription.GalaxPayId.ToString(),
+                                GalaxPayId = successResponse.Subscription.GalaxPayId.ToString(),
                                 Status = successResponse.Subscription.Status,
                                 ExternalId = successResponse.Subscription.MyId ?? string.Empty,
                                 CreatedAt = DateTime.Parse(successResponse.Subscription.CreatedAt),
                                 UpdatedAt = DateTime.Parse(successResponse.Subscription.UpdatedAt),
-                                Description = $"Subscription criada com sucesso. GalaxPayId: {successResponse.Subscription.GalaxPayId}"
+                                Description = $"Subscription criada com sucesso. GalaxPayId: {successResponse.Subscription.GalaxPayId}",
+                                Transactions = successResponse.Subscription.Transactions
                             };
                             
-                            _logger.LogInformation("Subscription criada com sucesso via CelPay. SubscriptionId: {SubscriptionId}", subscriptionResponse.Id);
+                            _logger.LogInformation("Subscription criada com sucesso via CelPay. SubscriptionId: {SubscriptionId}", subscriptionResponse.GalaxPayId);
                             return subscriptionResponse;
                         }
                     }
@@ -308,7 +309,7 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                     
                     var fallbackResponse = JsonConvert.DeserializeObject<CelPaySubscriptionResponseDto>(responseContent);
                     
-                    _logger.LogInformation("Subscription criada com sucesso via CelPay. SubscriptionId: {SubscriptionId}", fallbackResponse?.Id);
+                    _logger.LogInformation("Subscription criada com sucesso via CelPay. SubscriptionId: {SubscriptionId}", fallbackResponse?.GalaxPayId);
                     return fallbackResponse ?? new CelPaySubscriptionResponseDto { Status = "SUCCESS", ErrorMessage = "Resposta inválida do gateway" };
                 }
                 else
@@ -477,6 +478,115 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                 return new CelPaySubscriptionResponseDto 
                 { 
                     Status = "ERROR", 
+                    ErrorMessage = "Erro interno do sistema",
+                    ErrorCode = "INTERNAL_ERROR"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Busca cliente por email no CelPay
+        /// </summary>
+        public async Task<CelPayCustomerResponseDto> BuscarClientePorEmailAsync(string email)
+        {
+            try
+            {
+                // Configurar autenticação antes de fazer a requisição
+                await ConfigurarAutorizacaoAsync();
+
+                _logger.LogInformation("Buscando cliente por email via CelPay: {Email}", email);
+
+                // Construir query string para busca por email
+                // Usar string interpolation para evitar codificação do @
+                var queryString = $"customers?emails={email}&startAt=0&limit=100";
+                
+                _logger.LogInformation("URL da requisição: {Url}", $"{_baseUrl}{queryString}");
+                
+                var response = await _httpClient.GetAsync(queryString);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var customerResponse = JsonSerializer.Deserialize<CelPayCustomerResponseDto>(responseContent);
+                    
+                    _logger.LogInformation("Busca de cliente realizada com sucesso via CelPay. Clientes encontrados: {Count}", 
+                        customerResponse?.Customers?.Count ?? 0);
+                    
+                    return customerResponse ?? new CelPayCustomerResponseDto { Type = false, ErrorMessage = "Resposta inválida do gateway" };
+                }
+                else
+                {
+                    _logger.LogError("Erro ao buscar cliente via CelPay. Status: {Status}, Response: {Response}", response.StatusCode, responseContent);
+                    return new CelPayCustomerResponseDto 
+                    { 
+                        Type = false,
+                        ErrorMessage = $"Erro HTTP: {response.StatusCode}",
+                        ErrorCode = response.StatusCode.ToString()
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao buscar cliente via CelPay");
+                return new CelPayCustomerResponseDto 
+                { 
+                    Type = false,
+                    // ErrorMessage = "Erro interno do sistema",
+                    // ErrorCode = "INTERNAL_ERROR"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Cria um novo cliente no CelPay
+        /// </summary>
+        public async Task<CelPayCustomerResponseDto> CriarClienteAsync(CelPayCustomerRequestDto customerDto)
+        {
+            try
+            {
+                // Configurar autenticação antes de fazer a requisição
+                await ConfigurarAutorizacaoAsync();
+
+                var jsonContent = JsonSerializer.Serialize(customerDto, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                });
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation("Criando cliente via CelPay: {Name} - {Email}", customerDto.Name, string.Join(", ", customerDto.Emails));
+
+                var response = await _httpClient.PostAsync("/customers", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var customerResponse = JsonSerializer.Deserialize<CelPayCustomerResponseDto>(responseContent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                    });
+                    
+                    _logger.LogInformation("Cliente criado com sucesso via CelPay. ClienteId: {CustomerId}", 
+                        customerResponse?.FirstCustomer?.GalaxPayId);
+                    
+                    return customerResponse ?? new CelPayCustomerResponseDto { Type = false, ErrorMessage = "Resposta inválida do gateway" };
+                }
+                else
+                {
+                    _logger.LogError("Erro ao criar cliente via CelPay. Status: {Status}, Response: {Response}", response.StatusCode, responseContent);
+                    return new CelPayCustomerResponseDto 
+                    { 
+                        Type = false,
+                        ErrorMessage = $"Erro HTTP: {response.StatusCode}",
+                        ErrorCode = response.StatusCode.ToString()
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao criar cliente via CelPay");
+                return new CelPayCustomerResponseDto 
+                { 
+                    Type = false,
                     ErrorMessage = "Erro interno do sistema",
                     ErrorCode = "INTERNAL_ERROR"
                 };

@@ -57,7 +57,7 @@ namespace Projeto.Moope.Core.DTOs.Pagamentos
     /// </summary>
     public class CelPaySubscriptionResponseDto
     {
-        public string Id { get; set; } = string.Empty;
+        public string GalaxPayId { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string ExternalId { get; set; } = string.Empty;
         public string PlanId { get; set; } = string.Empty;
@@ -71,6 +71,7 @@ namespace Projeto.Moope.Core.DTOs.Pagamentos
         public SubscriptionPlanInfo? Plan { get; set; }
         public string? ErrorMessage { get; set; }
         public string? ErrorCode { get; set; }
+        public List<TransactionDto> Transactions { get; set; } = new();
     }
 
     /// <summary>

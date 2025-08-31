@@ -512,14 +512,14 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                     _logger.LogInformation("Busca de cliente realizada com sucesso via CelPay. Clientes encontrados: {Count}", 
                         customerResponse?.Customers?.Count ?? 0);
                     
-                    return customerResponse ?? new CelPayCustomerResponseDto { Type = false, ErrorMessage = "Resposta inválida do gateway" };
+                    return customerResponse ?? new CelPayCustomerResponseDto { Customers = null, ErrorMessage = "Resposta inválida do gateway" };
                 }
                 else
                 {
                     _logger.LogError("Erro ao buscar cliente via CelPay. Status: {Status}, Response: {Response}", response.StatusCode, responseContent);
                     return new CelPayCustomerResponseDto 
                     { 
-                        Type = false,
+                        Customers = null,
                         ErrorMessage = $"Erro HTTP: {response.StatusCode}",
                         ErrorCode = response.StatusCode.ToString()
                     };
@@ -530,9 +530,9 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                 _logger.LogError(ex, "Erro inesperado ao buscar cliente via CelPay");
                 return new CelPayCustomerResponseDto 
                 { 
-                    Type = false,
-                    // ErrorMessage = "Erro interno do sistema",
-                    // ErrorCode = "INTERNAL_ERROR"
+                    Customers = null,
+                    ErrorMessage = "Erro interno do sistema",
+                    ErrorCode = "INTERNAL_ERROR"
                 };
             }
         }
@@ -568,14 +568,14 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                     _logger.LogInformation("Cliente criado com sucesso via CelPay. ClienteId: {CustomerId}", 
                         customerResponse?.FirstCustomer?.GalaxPayId);
                     
-                    return customerResponse ?? new CelPayCustomerResponseDto { Type = false, ErrorMessage = "Resposta inválida do gateway" };
+                    return customerResponse ?? new CelPayCustomerResponseDto { Customers = null, ErrorMessage = "Resposta inválida do gateway" };
                 }
                 else
                 {
                     _logger.LogError("Erro ao criar cliente via CelPay. Status: {Status}, Response: {Response}", response.StatusCode, responseContent);
                     return new CelPayCustomerResponseDto 
                     { 
-                        Type = false,
+                        Customers = null,
                         ErrorMessage = $"Erro HTTP: {response.StatusCode}",
                         ErrorCode = response.StatusCode.ToString()
                     };
@@ -586,7 +586,7 @@ namespace Projeto.Moope.Infrastructure.Services.Pagamentos
                 _logger.LogError(ex, "Erro inesperado ao criar cliente via CelPay");
                 return new CelPayCustomerResponseDto 
                 { 
-                    Type = false,
+                    Customers = null,
                     ErrorMessage = "Erro interno do sistema",
                     ErrorCode = "INTERNAL_ERROR"
                 };

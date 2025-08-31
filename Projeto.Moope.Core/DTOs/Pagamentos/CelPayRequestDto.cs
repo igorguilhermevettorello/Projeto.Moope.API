@@ -40,6 +40,7 @@ namespace Projeto.Moope.Core.DTOs.Pagamentos
 
     public class CustomerInfo
     {
+        public string GalaxPayId { get; set; } = string.Empty;
         public string Name { get; set; }
         public string[] Emails { get; set; }
     }

@@ -33,6 +33,8 @@ namespace Projeto.Moope.Core.DTOs.Pagamentos
         /// Indica se a operação foi bem-sucedida (baseado na presença de clientes)
         /// </summary>
         public bool Type => HasCustomers;
+        public string ErrorMessage  { get; set; }  
+        public string ErrorCode   { get; set; }
     }
 
     /// <summary>

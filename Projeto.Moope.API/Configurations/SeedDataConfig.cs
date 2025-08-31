@@ -16,11 +16,12 @@ namespace Projeto.Moope.API.Configurations
                 var contextIdentity = serviceScope.ServiceProvider.GetRequiredService<AppIdentityDbContext>();
                 var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<IdentityUser<Guid>>>();
                 var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                var configuration = serviceScope.ServiceProvider.GetRequiredService<IConfiguration>();
 
                 await context.Database.MigrateAsync();
                 await contextIdentity.Database.MigrateAsync();
                 await SeedRolesAsync(roleManager);
-                await SeedUsersAsync(userManager, context);
+                await SeedUsersAsync(userManager, context, configuration);
             }
         }
 
@@ -35,7 +36,7 @@ namespace Projeto.Moope.API.Configurations
             }
         }
 
-        private static async Task SeedUsersAsync(UserManager<IdentityUser<Guid>> userManager, AppDbContext context)
+        private static async Task SeedUsersAsync(UserManager<IdentityUser<Guid>> userManager, AppDbContext context, IConfiguration configuration)
         {
             var emailAdmin = "admin@moope.com.br";
             if (await userManager.FindByEmailAsync(emailAdmin) == null)
@@ -48,7 +49,9 @@ namespace Projeto.Moope.API.Configurations
                     LockoutEnabled = true
                 };
 
-                var result = await userManager.CreateAsync(user, "Admin@123");
+                // Obtém a senha do admin da configuração (appsettings ou variável de ambiente)
+                var adminPassword = configuration["Admin:Password"] ?? "Admin@123";
+                var result = await userManager.CreateAsync(user, adminPassword);
 
                 if (result.Succeeded)
                 {

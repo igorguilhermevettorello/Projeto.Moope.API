@@ -195,6 +195,7 @@ namespace Projeto.Moope.Core.Commands.Vendas
                     },
                     Customer = new CustomerInfo
                     {
+                        GalaxPayId = customerId,
                         Name = request.NomeCliente,
                         Emails = new string[] { request.Email },
                     },

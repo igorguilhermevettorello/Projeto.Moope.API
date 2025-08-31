@@ -70,3 +70,93 @@ Senha: webservice@
 
 Plano basico = 3787
 plano premium = 3789
+***************************************************************
+
+docker build -t moope-frontend . 
+## docker run -d -p 4001:4001 moope-frontend 
+docker run -d -p 4001:4001 --name moope-frontend moope-frontend
+docker logs -f moope-frontend
+
+docker run -d --name moope-frontend -p 4001:80 -v "$(pwd)/dist/moope/browser:/usr/share/nginx/html:ro" nginx:alpine
+docker exec -it moope-frontend ls -la /usr/share/nginx/html
+
+# comando para ver as pastas no serviço docker
+docker exec -it moope-frontend ls -la /usr/share/nginx/html
+
+
+docker ps --format "table {{.ID}}\t{{.Image}}\t{{.Ports}}\t{{.Names}}"
+
+
+docker compose -f docker-compose-traefik-prod.yml up -d --build --scale app=3
+
+PORT=4002 node dist/moope/server/server.mjs
+
+
+
+docker compose -f docker-compose-traefik-prod.yml up -d --build
+docker compose logs -f traefik
+docker compose logs -f web
+
+
+---
+## docker compose -f docker-compose-mysql.yml up -d --build
+## docker compose -f docker-compose-mysql.yml ps
+## docker compose -f docker-compose-mysql.yml logs -f mysql phpmyadmin 
+## sudo ss -ltnp | grep :3307
+## 
+## docker compose -f docker-compose.mysql.yml up -d --build
+## docker compose -f docker-compose.mysql.yml ps
+## docker compose -f docker-compose.mysql.yml logs -f mysql phpmyadmin 
+
+
+# Subir/Recriar
+docker compose -f docker-compose-mysql.yml up -d --build
+
+# Ver status
+docker compose -f docker-compose-mysql.yml ps
+
+# Logs
+docker compose -f docker-compose-mysql.yml logs -f mysql phpmyadmin
+
+# Testar conexão pelo host (porta 3307)
+mysql -h 127.0.0.1 -P 3307 -u appuser -p
+
+-----
+docker compose -f docker-compose-traefik-api.yml up -d --build
+
+# ver status
+docker compose -f docker-compose-traefik-api.yml ps
+
+# logs
+docker compose -f docker-compose-traefik-api.yml logs -f api
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+
+igor@debian:~$ htpasswd -nb admin 'M00p3**P@55w$Rd' | sed -e 's/\$/\$\$/g'
+admin:$$apr1$$/DJ0gTSi$$q4mLt/l6LKMqOIvNEV3No1
+
+
+docker exec -it moope-mysql bash
+
+
+
+https://moope.localhost/
+https://dbadmin.localhost/
+
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+docker compose -f docker-compose.yml up -d --build
+
+docker compose logs -f moope-phpmyadmin
+docker compose logs -f moope-frontend
+docker compose logs -f moope-mysql
+docker compose logs -f traefik
+docker compose logs -f moope-api
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+chmod +x deploy.sh
+
+# Usar o script
+./deploy.sh staging up
+./deploy.sh staging logs
+./deploy.sh staging down
